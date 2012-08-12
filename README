@@ -1,0 +1,12 @@
+== kde-thumbnailer-epub ==
+
+A KDE thumbnail generator for the ePub file format. It uses libepub from ebook-tools [http://sourceforge.net/projects/ebook-tools/] to (try to) extract the covers. libepub is the library used by Okular to handle the ePub file format.
+
+== Installation from source ==
+
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=`kde4-config --prefix` ..
+make
+sudo make install
+kbuildsycoca4
