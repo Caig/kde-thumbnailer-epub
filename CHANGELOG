@@ -1,0 +1,12 @@
+0.2
+-----
+Increased supported ePub files:
+    * a new strategy to retrieve the cover from standard compliant ePub files;
+    * the "old" strategy now is the second option;
+    * a little improvement to increase the possibility of a successful result.
+Some minor improvements.
+Simplified Chinese (zh_CN) translation added. Thanks to nihui.
+
+0.1
+-----
+First release

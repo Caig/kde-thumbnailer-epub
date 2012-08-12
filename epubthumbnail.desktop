@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Service
+Name=ePub documents
+Name[it]=Documenti ePub
+Name[zh_CN]=ePub 文档
+X-KDE-ServiceTypes=ThumbCreator
+MimeType=application/epub+zip;
+CacheThumbnail=true
+X-KDE-Library=epubthumbnail
