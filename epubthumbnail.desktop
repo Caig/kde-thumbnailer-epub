@@ -2,6 +2,7 @@
 Encoding=UTF-8
 Type=Service
 Name=ePub documents
+Name[de]=ePub-Dateien
 Name[it]=Documenti ePub
 Name[zh_CN]=ePub 文档
 X-KDE-ServiceTypes=ThumbCreator
