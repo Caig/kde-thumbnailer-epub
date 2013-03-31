@@ -40,22 +40,17 @@ class EPUBCreator : public QObject, public ThumbCreator
         epub *mEpub;
         eiterator *mEiterator;
         titerator *mTiterator;
+        
         QString mCoverPage;
         QXmlStreamReader *mQXml;
-        QString mCoverName;
+        QString mCoverImageName;
 
-        // try to retrieve the cover searching for a right guide in the toc
-        bool coverFromGuide();
-        // try to retrieve the cover parsing the first xml/html file
-        bool coverFromFirstFile();
-        // try to retrieve the cover parsing opf metadata section
-        bool coverFromMetadata();
-        // parse the mCoverPage to find the mCoverName
-        QImage searchCoverName();
-        // get image from mCoverName;
-        QImage getCoverImage();
-        // fix some name problems
-        void checkCoverName();
+        bool coverFromGuide(); //retrieve the cover searching for a right guide in the toc
+        bool coverFromFirstFile(); //retrieve the cover parsing the first xml/html file
+        bool coverFromMetadata(); //retrieve the cover parsing opf metadata section
+        void parseCoverPage(); //parse the mCoverPage to find the mCoverImageName
+        void fixCoverImageName(); //fix some name issues
+        QImage getCoverImage(); //get image from mCoverImageName;
 };
 
 #endif // EPUBTHUMBNAIL_H

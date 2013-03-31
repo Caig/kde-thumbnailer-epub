@@ -43,42 +43,33 @@ EPUBCreator::~EPUBCreator()
 
 bool EPUBCreator::create( const QString& path, int width, int height, QImage& img )
 {
-    mEpub = epub_open(qPrintable(path), 0); // 3 for complete informations
+    mEpub = epub_open(qPrintable(path), 0);
     if (!mEpub)
         return false;
 
-    QImage image;
-
+    bool foundImage = false;
+    
     if (coverFromGuide())
-    {
-        image = searchCoverName();
-        //qDebug() << "...working...";
-        if (!image.isNull())
-        {
-            img = image.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            //qDebug() << "...success!";
-        }
-    }
+        foundImage = true;
     else if (coverFromMetadata())
-    {
-        image = getCoverImage();
-
-        if (!image.isNull())
-        {
-            img = image.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        }
-    }
+        foundImage = true;
     else if (coverFromFirstFile())
+        foundImage = true;
+    
+    if (foundImage == true && mCoverImageName != "")
     {
-        image = searchCoverName();
-        //qDebug() << "...working...";
+        fixCoverImageName();
+        
+        QImage image;
+        image = getCoverImage();
+        
         if (!image.isNull())
-        {
             img = image.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            //qDebug() << "...success!";
-        }
     }
 
+    mCoverPage = "";
+    mCoverImageName = "";
+    
     epub_close(mEpub);
 
     return !img.isNull();
@@ -105,8 +96,9 @@ bool EPUBCreator::coverFromGuide()
                 //qDebug() << "Open" << epub_tit_get_curr_link(mTiterator);
                 //qDebug() << data;
                 mCoverPage = QString(data);
+                parseCoverPage();
                 result = true;
-                break; //found the cover guide
+                break;
             }
         }
 
@@ -127,6 +119,7 @@ bool EPUBCreator::coverFromFirstFile()
     if (epub_it_get_curr(mEiterator))
     {
         mCoverPage = QString(epub_it_get_curr(mEiterator));
+        parseCoverPage();
         //qDebug() << "Open" << epub_it_get_curr_url(mEiterator);
         //qDebug() << epub_it_get_curr(mEiterator);
         result = true;
@@ -152,9 +145,9 @@ bool EPUBCreator::coverFromMetadata()
 
         if (mData.contains("cover", Qt::CaseInsensitive))
         {
-            mCoverName = "Images/" + mData.section(':', 1, 1).trimmed();
+            mCoverImageName = "Images/" + mData.section(':', 1, 1).trimmed();
 
-            if (!mCoverName.isEmpty())
+            if (!mCoverImageName.isEmpty())
             {
                 result = true;
                 break;
@@ -170,66 +163,42 @@ QImage EPUBCreator::getCoverImage()
     QImage image;
 
     char *data;
-    int size = epub_get_data(mEpub, qPrintable(mCoverName), &data);
+    int size = epub_get_data(mEpub, qPrintable(mCoverImageName), &data);
 
     if (data)
-    {
         image.loadFromData((unsigned char *)data, size);
-    }
 
     return image;
 }
 
 
-QImage EPUBCreator::searchCoverName()
+void EPUBCreator::parseCoverPage()
 {
     mQXml->addData(mCoverPage);
-
-    QImage image;
 
     while (!mQXml->atEnd())
     {
         mQXml->readNextStartElement();
-        //qDebug() << "mQXml";
-        //qDebug() << "*" << mQXml->name();
+
         if (mQXml->name() == "img")
         {
-            char *data;
-            mCoverName = mQXml->attributes().value("src").toString();
-            checkCoverName();
-            int size = epub_get_data(mEpub, qPrintable(mCoverName), &data); //try to load the cover
-            //qDebug() << "img";
-            if (data)
-            {
-                //qDebug() << "data1";
-                image.loadFromData((unsigned char *)data, size);
-                break;
-            }
+            mCoverImageName = mQXml->attributes().value("src").toString();
+            break;
         }
         else if (mQXml->name() == "image")
         {
-            char *data;
-            mCoverName = mQXml->attributes().value("xlink:href").toString();
-            checkCoverName();
-            int size = epub_get_data(mEpub, qPrintable(mCoverName), &data); //try to load the cover
-            //qDebug() << "image";
-            if (data)
-            {
-                //qDebug() << "data2";
-                image.loadFromData((unsigned char *)data, size);
-                break;
-            }
+            mCoverImageName = mQXml->attributes().value("xlink:href").toString();
+            break;
         }
     }
 
     mQXml->clear();
-    return image;
 }
 
-void EPUBCreator::checkCoverName()
+void EPUBCreator::fixCoverImageName()
 {
-    if (mCoverName.left(3) == "../")
-        mCoverName.remove(0, 3);
+    if (mCoverImageName.left(3) == "../")
+        mCoverImageName.remove(0, 3);
 }
 
 ThumbCreator::Flags EPUBCreator::flags() const
