@@ -1,2 +1,1 @@
-- to increase the number of supported epub documents
-- ?
+- try epublib.h: _opf_manifest_get_by_id
