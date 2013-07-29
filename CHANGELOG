@@ -1,3 +1,10 @@
+0.3.1
+-----
+* Added another strategy to find the cover, currently shaped on Sigil (by dliw)
+* German translation added (by dliw)
+* Better memory management
+* Minor code improvements
+
 0.2
 -----
 Increased supported ePub files:

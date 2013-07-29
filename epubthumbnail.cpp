@@ -41,7 +41,7 @@ EPUBCreator::~EPUBCreator()
     epub_cleanup();
 }
 
-bool EPUBCreator::create( const QString& path, int width, int height, QImage& img )
+bool EPUBCreator::create(const QString &path, int width, int height, QImage &img)
 {
     mEpub = epub_open(qPrintable(path), 0);
     if (!mEpub)
@@ -61,7 +61,7 @@ bool EPUBCreator::create( const QString& path, int width, int height, QImage& im
         fixCoverImageName();
         
         QImage image;
-        image = getCoverImage();
+        getCoverImage(image);
         
         if (!image.isNull())
             img = image.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -83,15 +83,19 @@ bool EPUBCreator::coverFromGuide()
 
     while (epub_tit_curr_valid(mTiterator))
     {
-        if (QString(epub_tit_get_curr_label(mTiterator)).toLower() == "cover") //toLower to avoid problems with some epubs
+        if (QString(epub_tit_get_curr_label(mTiterator)).toLower() == "cover") //toLower to avoid issues with some epubs
         {
             char *data;
-            epub_get_data(mEpub, epub_tit_get_curr_link(mTiterator), &data);
-            if (data)
+            int size = epub_get_data(mEpub, epub_tit_get_curr_link(mTiterator), &data);
+            if (size != -1)
             {
                 mCoverPage = QString(data);
                 parseCoverPage();
                 result = true;
+                
+                free(data); //because of malloc in epub_get_data
+                data = NULL;
+                
                 break;
             }
         }
@@ -150,17 +154,18 @@ bool EPUBCreator::coverFromMetadata()
     return result;
 }
 
-QImage EPUBCreator::getCoverImage()
+void EPUBCreator::getCoverImage(QImage &image)
 {
-    QImage image;
-
     char *data;
     int size = epub_get_data(mEpub, qPrintable(mCoverImageName), &data);
 
-    if (data)
+    if (size != -1)
+    {
         image.loadFromData((unsigned char *)data, size);
-
-    return image;
+        
+        free(data); //because of malloc in epub_get_data
+        data = NULL;
+    }
 }
 
 

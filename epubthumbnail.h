@@ -33,7 +33,7 @@ class EPUBCreator : public QObject, public ThumbCreator
     public:
         explicit EPUBCreator();
         virtual ~EPUBCreator();
-        virtual bool create(const QString& path, int width, int height, QImage& img);
+        virtual bool create(const QString &path, int width, int height, QImage &img);
         virtual Flags flags() const;
 
     private:
@@ -50,7 +50,7 @@ class EPUBCreator : public QObject, public ThumbCreator
         bool coverFromMetadata(); //retrieve the cover parsing opf metadata section
         void parseCoverPage(); //parse the mCoverPage to find the mCoverImageName
         void fixCoverImageName(); //fix some name issues
-        QImage getCoverImage(); //get image from mCoverImageName;
+        void getCoverImage(QImage &image); //get image from mCoverImageName;
 };
 
 #endif // EPUBTHUMBNAIL_H
