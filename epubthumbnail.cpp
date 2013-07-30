@@ -134,23 +134,28 @@ bool EPUBCreator::coverFromMetadata()
     unsigned char **metadata;
 
     metadata = epub_get_metadata(mEpub, EPUB_META, &size);
-    for (int i = 0; i < size; i++)
+    if (metadata)
     {
-        QString mData = QString((char *)metadata[i]);
-
-        if (mData.contains("cover", Qt::CaseInsensitive))
+        for (int i = 0; i < size; i++)
         {
-            mCoverImageName = "Images/" + mData.section(':', 1, 1).trimmed();
+            QString mData = QString((char *)metadata[i]);
 
-            QString ext = mCoverImageName.section('.', -1, -1); 
-            if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "gif")
+            if (mData.contains("cover", Qt::CaseInsensitive))
             {
-                result = true;
-                break;
+                mCoverImageName = "Images/" + mData.section(':', 1, 1).trimmed();
+
+                QString ext = mCoverImageName.section('.', -1, -1); 
+                if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "gif")
+                {
+                    result = true;
+                    break;
+                }
             }
         }
+        
+        free(metadata);    
     }
-
+    
     return result;
 }
 
