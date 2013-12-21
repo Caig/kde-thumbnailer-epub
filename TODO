@@ -1,2 +1,2 @@
-- parse xhtml to pick the first image/img tag?
 - parse guide?
+- parse spine to pick the first file and then the xhtml to pick the first image/img tag?
