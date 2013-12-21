@@ -1,3 +1,9 @@
+0.? beta (nolibepub branch)
+-----
+Complete rewrite:
+    * It no more requires libepub.
+    * Increased supported ePub files.
+
 0.3.1
 -----
 * Added another strategy to find the cover, currently shaped on Sigil (by dliw)

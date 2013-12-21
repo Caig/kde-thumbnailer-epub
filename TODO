@@ -1,1 +1,2 @@
-- improve epub support
+- parse xhtml to pick the first image/img tag?
+- parse guide?

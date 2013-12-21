@@ -16,22 +16,32 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EPUBTHUMBNAIL_H
-#define EPUBTHUMBNAIL_H
+#ifndef EPUB_H
+#define EPUB_H
 
-#include <QObject>
-#include <kio/thumbcreator.h>
+#include <kzip.h>
 
-class EPUBCreator : public QObject, public ThumbCreator
+class epub : public KZip
 {
-    Q_OBJECT
+public:
+    epub(const QString &path);
+    bool open(QIODevice::OpenMode mode);
 
-    public:
-        explicit EPUBCreator();
-        virtual ~EPUBCreator();
-        virtual bool create(const QString &path, int width, int height, QImage &img);
-        virtual Flags flags() const;
+    QString parseMetadata();
+    QString parseManifest(QString &coverId);
+    //QString parseGuide();
 
+    QString getFileUrl(const QString &href);
+    QIODevice &getCover(const QString &fileName);
+
+private:
+    QSharedPointer<QIODevice> mContainer;
+    QStringList mItemsList;
+    QString mOpfUrl;
+
+    void getItemsList(const KArchiveDirectory *dir, QString path);
+    bool getOpfUrl();
+    void getFile(const QString &fileName);
 };
 
-#endif // EPUBTHUMBNAIL_H
+#endif // EPUB_H
