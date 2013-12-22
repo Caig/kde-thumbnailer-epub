@@ -232,8 +232,15 @@ void epub::getFile(const QString &fileName)
     // delete dir and file...
 }
 
-QIODevice &epub::getCover(const QString &fileName)
+bool epub::getCoverImage(const QString &fileName, QImage &coverImage)
 {
     getFile(fileName);
-    return *mContainer.data();
+
+    QImage tCoverImage;
+    if (tCoverImage.loadFromData(mContainer.data()->readAll())) {
+        coverImage = tCoverImage;
+        return true;
+    }
+
+    return false;
 }

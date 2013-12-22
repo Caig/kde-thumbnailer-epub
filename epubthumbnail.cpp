@@ -63,9 +63,9 @@ bool EPUBCreator::create(const QString &path, int width, int height, QImage &img
                     || coverUrl.endsWith(".png", Qt::CaseInsensitive)
                     || coverUrl.endsWith(".gif", Qt::CaseInsensitive)
                     || coverUrl.endsWith(".bmp", Qt::CaseInsensitive)) {
-                QImage image;
-                if (image.loadFromData(epubFile.getCover(coverUrl).readAll())) {
-                    img = image.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                QImage coverImage;
+                if (epubFile.getCoverImage(coverUrl, coverImage)) {
+                    img = coverImage.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                     qDebug() << "[epub thumbnailer]" << "Done!";
                 }
             } else if (coverUrl.endsWith(".xhtml", Qt::CaseInsensitive)

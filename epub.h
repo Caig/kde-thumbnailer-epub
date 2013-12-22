@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef EPUB_H
 #define EPUB_H
 
+#include <QtGui/QImage>
 #include <kzip.h>
 
 class epub : public KZip
@@ -32,7 +33,7 @@ public:
     //QString parseGuide();
 
     QString getFileUrl(const QString &href);
-    QIODevice &getCover(const QString &fileName);
+    bool getCoverImage(const QString &fileName, QImage &coverImage);
 
 private:
     QSharedPointer<QIODevice> mContainer;
