@@ -94,12 +94,8 @@ bool epub::getOpfUrl()
             if (qxml.name() == "rootfile" && qxml.isStartElement()) {
                 QXmlStreamAttributes qxmlAttributes = qxml.attributes();
 
-                for (int pos = 0; pos < qxmlAttributes.size(); pos++)
-                {
-                    if (qxmlAttributes.at(pos).name() == "full-path") {
-                        value = qxmlAttributes.at(pos).value().toString();
-                        break;
-                    }
+                if (qxmlAttributes.hasAttribute("full-path")) {
+                    value = qxmlAttributes.value("full-path").toString();
                 }
             }
         }
@@ -165,8 +161,9 @@ QString epub::parseManifest(QString &coverId)
     qDebug() << "[epub thumbnailer]" << "Searching for cover href in manifest...";
 
     bool exactMatch = true;
-    if (coverId == "") {
-        coverId = "cover";
+    QString tCoverId = coverId;
+    if (tCoverId == "") {
+        tCoverId = "cover";
         exactMatch = false;
     }
 
@@ -188,12 +185,12 @@ QString epub::parseManifest(QString &coverId)
 
             if (qxmlAttributes.hasAttribute("id") && qxmlAttributes.hasAttribute("href")) {
                 if (exactMatch == true) {
-                    if (qxmlAttributes.value("id") == coverId) {
+                    if (qxmlAttributes.value("id").toString().toLower() == tCoverId.toLower()) { //toLower as a workaround for some stupid epubs
                         value = qxmlAttributes.value("href").toString();
                         break;
                     }
                 } else {
-                    if (qxmlAttributes.value("id").contains(coverId, Qt::CaseInsensitive) && qxmlAttributes.value("media-type").contains("image")) {
+                    if (qxmlAttributes.value("id").contains(tCoverId, Qt::CaseInsensitive) && qxmlAttributes.value("media-type").contains("image")) {
                         value = qxmlAttributes.value("href").toString();
                         break;
                     }
