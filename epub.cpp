@@ -156,7 +156,7 @@ QString epub::parseMetadata()
     return value;
 }
 
-QString epub::parseManifest(QString &coverId)
+QString epub::parseManifest(const QString &coverId)
 {
     qDebug() << "[epub thumbnailer]" << "Searching for cover href in manifest...";
 

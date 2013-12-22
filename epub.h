@@ -28,7 +28,7 @@ public:
     bool open(QIODevice::OpenMode mode);
 
     QString parseMetadata();
-    QString parseManifest(QString &coverId);
+    QString parseManifest(const QString &coverId);
     //QString parseGuide();
 
     QString getFileUrl(const QString &href);
