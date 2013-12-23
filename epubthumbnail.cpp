@@ -30,6 +30,8 @@ extern "C"
     }
 }
 
+bool endsWith (const QString &coverUrl, const QStringList &extensions);
+
 EPUBCreator::EPUBCreator()
 {
 
@@ -58,21 +60,13 @@ bool EPUBCreator::create(const QString &path, int width, int height, QImage &img
         if (coverUrl != "") {
             qDebug() << "[epub thumbnailer]" << "Cover url:" << coverUrl;
 
-            if (coverUrl.endsWith(".jpg", Qt::CaseInsensitive)
-                    || coverUrl.endsWith(".jpeg", Qt::CaseInsensitive)
-                    || coverUrl.endsWith(".png", Qt::CaseInsensitive)
-                    || coverUrl.endsWith(".gif", Qt::CaseInsensitive)
-                    || coverUrl.endsWith(".bmp", Qt::CaseInsensitive)) {
+            if (endsWith(coverUrl, QStringList() << "jpg" << "jpeg" << "png" << "gif" << "bmp")) {
                 QImage coverImage;
                 if (epubFile.getCoverImage(coverUrl, coverImage)) {
                     img = coverImage.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                     qDebug() << "[epub thumbnailer]" << "Done!";
                 }
-            } else if (coverUrl.endsWith(".xhtml", Qt::CaseInsensitive)
-                     || coverUrl.endsWith(".xhtm", Qt::CaseInsensitive)
-                     || coverUrl.endsWith(".html", Qt::CaseInsensitive)
-                     || coverUrl.endsWith(".htm", Qt::CaseInsensitive)
-                     || coverUrl.endsWith(".xml", Qt::CaseInsensitive)) {
+            } else if (endsWith(coverUrl, QStringList() << "xhtml" << "xhtm" << "html" << "htm" << "xml")) {
                 qDebug() << "[epub thumbnailer]" << "Not implemented.";
             }
         } else {
@@ -88,4 +82,18 @@ bool EPUBCreator::create(const QString &path, int width, int height, QImage &img
 ThumbCreator::Flags EPUBCreator::flags() const
 {
     return None;
+}
+
+bool endsWith (const QString &coverUrl, const QStringList &extensions)
+{
+    bool returnValue = false;
+
+    for (int i = 0; i < extensions.count(); ++i)
+    {
+        if (coverUrl.endsWith("." + extensions.at(i), Qt::CaseInsensitive)) {
+            returnValue = true;
+        }
+    }
+
+    return returnValue;
 }
