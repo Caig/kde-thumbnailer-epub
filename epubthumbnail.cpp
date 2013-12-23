@@ -30,8 +30,6 @@ extern "C"
     }
 }
 
-bool endsWith (const QString &coverUrl, const QStringList &extensions);
-
 EPUBCreator::EPUBCreator()
 {
 
@@ -55,22 +53,16 @@ bool EPUBCreator::create(const QString &path, int width, int height, QImage &img
         QString coverHref = epubFile.parseManifest(metadataRef);
 
         qDebug() << "[epub thumbnailer]" << "Searching for cover url...";
-        QString coverUrl = epubFile.getFileUrl(coverHref);
+        QString coverUrl = epubFile.getCoverUrl(coverHref);
 
         if (coverUrl != "") {
             qDebug() << "[epub thumbnailer]" << "Cover url:" << coverUrl;
 
-            if (endsWith(coverUrl, QStringList() << "jpg" << "jpeg" << "png" << "gif" << "bmp")) {
-                QImage coverImage;
-                if (epubFile.getCoverImage(coverUrl, coverImage)) {
-                    img = coverImage.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                    qDebug() << "[epub thumbnailer]" << "Done!";
-                }
-            } else if (endsWith(coverUrl, QStringList() << "xhtml" << "xhtm" << "html" << "htm" << "xml")) {
-                qDebug() << "[epub thumbnailer]" << "Not implemented.";
+            QImage coverImage;
+            if (epubFile.getCoverImage(coverUrl, coverImage)) {
+                img = coverImage.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                qDebug() << "[epub thumbnailer]" << "Done!";
             }
-        } else {
-            qDebug() << "[epub thumbnailer]" << "Has it a cover?";
         }
     }
 
@@ -82,18 +74,4 @@ bool EPUBCreator::create(const QString &path, int width, int height, QImage &img
 ThumbCreator::Flags EPUBCreator::flags() const
 {
     return None;
-}
-
-bool endsWith (const QString &coverUrl, const QStringList &extensions)
-{
-    bool returnValue = false;
-
-    for (int i = 0; i < extensions.count(); ++i)
-    {
-        if (coverUrl.endsWith("." + extensions.at(i), Qt::CaseInsensitive)) {
-            returnValue = true;
-        }
-    }
-
-    return returnValue;
 }

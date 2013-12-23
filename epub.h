@@ -33,6 +33,7 @@ public:
     //QString parseGuide();
 
     QString getFileUrl(const QString &href);
+    QString getCoverUrl(const QString &href);
     bool getCoverImage(const QString &fileName, QImage &coverImage);
 
 private:
@@ -43,6 +44,7 @@ private:
     void getItemsList(const KArchiveDirectory *dir, QString path);
     bool getOpfUrl();
     void getFile(const QString &fileName);
+    QString parseCoverPage(const QString &coverUrl);
 };
 
 #endif // EPUB_H

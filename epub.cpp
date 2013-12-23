@@ -21,6 +21,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <QtCore/QXmlStreamReader>
 #include <QtCore/QDebug>
 
+bool endsWith (const QString &coverUrl, const QStringList &extensions);
+
 epub::epub(const QString &path) : KZip(path)
 {
     qDebug() << "[epub thumbnailer]" << "Opening" << path;
@@ -62,7 +64,7 @@ void epub::getItemsList(const KArchiveDirectory *dir, QString path)
 {
     QStringList tempList = dir->entries();
 
-    for (int i = 0; i < tempList.count(); i++)
+    for (int i = 0; i < tempList.count(); ++i)
     {
         const KArchiveEntry *entry = dir->entry(tempList.at(i));
 
@@ -87,7 +89,7 @@ bool epub::getOpfUrl()
 
         QXmlStreamReader qxml(mContainer.data());
 
-        while(!qxml.atEnd() && !qxml.hasError())
+        while(!qxml.atEnd())
         {
             qxml.readNext();
 
@@ -96,6 +98,7 @@ bool epub::getOpfUrl()
 
                 if (qxmlAttributes.hasAttribute("full-path")) {
                     value = qxmlAttributes.value("full-path").toString();
+                    break;
                 }
             }
         }
@@ -104,7 +107,7 @@ bool epub::getOpfUrl()
     if (value == "") {
         qDebug() << "[epub thumbnailer]" << "No or wrong container.xml, trying to find opf file manually...";
 
-        for (int i = 0; i < mItemsList.count(); i++)
+        for (int i = 0; i < mItemsList.count(); ++i)
         {
             if (mItemsList.at(i).endsWith(".opf", Qt::CaseInsensitive)) {
                 value = mItemsList.at(i);
@@ -127,7 +130,7 @@ QString epub::parseMetadata()
 
     QString value = "";
 
-    while(!qxml.atEnd() && !qxml.hasError())
+    while(!qxml.atEnd())
     {
         qxml.readNext();
 
@@ -172,7 +175,7 @@ QString epub::parseManifest(const QString &coverId)
 
     QString value = "";
 
-    while(!qxml.atEnd() && !qxml.hasError())
+    while(!qxml.atEnd())
     {
         qxml.readNext();
 
@@ -209,16 +212,45 @@ QString epub::parseManifest(const QString &coverId)
     return value;
 }
 
+//to ensure the ref is an existing file path
 QString epub::getFileUrl(const QString &href)
 {
     QString value = "";
+    QString tHref = href;
 
-    for (int i = 0; i < mItemsList.count(); i++)
+    //sometimes parseCoverPage finds relative path, fixes it before to use it
+    if (href.startsWith("../")) {
+        tHref = href.mid(3);
+    }
+
+    for (int i = 0; i < mItemsList.count(); ++i)
     {
-        if (mItemsList.at(i).contains(href)) {
+        if (mItemsList.at(i).contains(tHref)) {
             value = mItemsList.at(i);
             break;
         }
+    }
+
+    return value;
+}
+
+QString epub::getCoverUrl(const QString &href)
+{
+    QString value = getFileUrl(href);
+
+    if (value != "") {
+        if (endsWith(value, QStringList() << "jpg" << "jpeg" << "png" << "gif" << "bmp")) {
+            return value;
+        } else if (endsWith(value, QStringList() << "xhtml" << "xhtm" << "html" << "htm" << "xml")) {
+            QString tCoverUrl = parseCoverPage(value);
+            if (tCoverUrl != "") {
+                value = getFileUrl(tCoverUrl);
+            } else {
+                qDebug() << "[epub thumbnailer]" << "No image found in the cover page.";
+            }
+        }
+    } else {
+        qDebug() << "[epub thumbnailer]" << "Has it a cover?";
     }
 
     return value;
@@ -243,4 +275,43 @@ bool epub::getCoverImage(const QString &fileName, QImage &coverImage)
     }
 
     return false;
+}
+
+// parse an xhtm(in an ideal world with just validated epub files) to search for the first image reference
+QString epub::parseCoverPage(const QString &coverUrl)
+{
+    getFile(coverUrl);
+
+    QXmlStreamReader qxml(mContainer.data());
+
+    QString tCoverUrl = "";
+
+    while (!qxml.atEnd())
+    {
+        qxml.readNextStartElement();
+
+        if (qxml.name() == "img") {
+            tCoverUrl = qxml.attributes().value("src").toString();
+            break;
+        } else if (qxml.name() == "image") {
+            tCoverUrl = qxml.attributes().value("xlink:href").toString();
+            break;
+        }
+    }
+
+    return tCoverUrl;
+}
+
+bool endsWith (const QString &coverUrl, const QStringList &extensions)
+{
+    bool returnValue = false;
+
+    for (int i = 0; i < extensions.count(); ++i)
+    {
+        if (coverUrl.endsWith("." + extensions.at(i), Qt::CaseInsensitive)) {
+            returnValue = true;
+        }
+    }
+
+    return returnValue;
 }
