@@ -1,7 +1,7 @@
-0.? beta (nolibepub branch)
+0.9 beta (nolibepub branch)
 -----
 Complete rewrite:
-    * It no more requires libepub.
+    * It requires no more libepub.
     * Increased supported ePub files.
 
 0.3.1

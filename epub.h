@@ -20,6 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #define EPUB_H
 
 #include <QtGui/QImage>
+#include <QtCore/QXmlStreamReader>
 #include <kzip.h>
 
 class epub : public KZip
@@ -32,18 +33,23 @@ public:
     QString parseManifest(const QString &coverId);
     //QString parseGuide();
 
-    QString getFileUrl(const QString &href);
     QString getCoverUrl(const QString &href);
     bool getCoverImage(const QString &fileName, QImage &coverImage);
 
 private:
-    QSharedPointer<QIODevice> mContainer;
     QStringList mItemsList;
+    QScopedPointer<QIODevice> mContainer;
+    QXmlStreamReader mQXml;
+    QString mDeviceUrl;
+
     QString mOpfUrl;
 
     void getItemsList(const KArchiveDirectory *dir, QString path);
     bool getOpfUrl();
-    void getFile(const QString &fileName);
+    QString getFileUrl(const QString &href);
+    bool getFile(const QString &fileName);
+    void getXml(const QString &fileName);
+
     QString parseCoverPage(const QString &coverUrl);
 };
 

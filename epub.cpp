@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "epub.h"
 
-#include <QtCore/QXmlStreamReader>
 #include <QtCore/QDebug>
 
 bool endsWith (const QString &coverUrl, const QStringList &extensions);
@@ -38,7 +37,7 @@ bool epub::open(QIODevice::OpenMode mode)
 
     if (mItemsList.count() != 0) {
         /*
-        for (int i = 0; i < mItemsList.count(); i++)
+        for (int i = 0; i < mItemsList.count(); ++i)
         {
             qDebug() << "[epub thumbnailer]" << mItemsList.at(i);
         }
@@ -51,7 +50,6 @@ bool epub::open(QIODevice::OpenMode mode)
 
     if (getOpfUrl()) {
         qDebug() << "[epub thumbnailer]" << "Opf:" << mOpfUrl;
-        getFile(mOpfUrl); // ready to be parsed
     } else {
         qDebug() << "[epub thumbnailer]" << "No OPF file found.";
         return false;
@@ -82,19 +80,18 @@ bool epub::getOpfUrl()
 
     QString value = "";
 
-    // parse container.xml to get a reference to the opf file
     QString containerXmlUrl = getFileUrl("META-INF/container.xml"); // it must exist according to format specification, but better to be sure...
     if (containerXmlUrl != "") {
-        getFile(containerXmlUrl);
+        if (mDeviceUrl != containerXmlUrl) {
+            getXml(containerXmlUrl);
+        }
 
-        QXmlStreamReader qxml(mContainer.data());
-
-        while(!qxml.atEnd())
+        while(!mQXml.atEnd())
         {
-            qxml.readNext();
+            mQXml.readNext();
 
-            if (qxml.name() == "rootfile" && qxml.isStartElement()) {
-                QXmlStreamAttributes qxmlAttributes = qxml.attributes();
+            if (mQXml.name() == "rootfile" && mQXml.isStartElement()) {
+                QXmlStreamAttributes qxmlAttributes = mQXml.attributes();
 
                 if (qxmlAttributes.hasAttribute("full-path")) {
                     value = qxmlAttributes.value("full-path").toString();
@@ -107,13 +104,15 @@ bool epub::getOpfUrl()
     if (value == "") {
         qDebug() << "[epub thumbnailer]" << "No or wrong container.xml, trying to find opf file manually...";
 
-        for (int i = 0; i < mItemsList.count(); ++i)
+        int i = 0;
+        while (i < mItemsList.count())
         {
             if (mItemsList.at(i).endsWith(".opf", Qt::CaseInsensitive)) {
                 value = mItemsList.at(i);
                 qDebug() << "[epub thumbnailer]" << "Opf manually found.";
                 break;
             }
+            ++i;
         }
     }
 
@@ -126,20 +125,20 @@ QString epub::parseMetadata()
 {
     qDebug() << "[epub thumbnailer]" << "Searching cover reference in metadata...";
 
-    QXmlStreamReader qxml(mContainer.data());
+    getXml(mOpfUrl);
 
     QString value = "";
 
-    while(!qxml.atEnd())
+    while(!mQXml.atEnd())
     {
-        qxml.readNext();
+        mQXml.readNext();
 
-        if (qxml.name() == "metadata" && qxml.isEndElement()) {
+        if (mQXml.name() == "metadata" && mQXml.isEndElement()) {
             break;
         }
 
-        if (qxml.name() == "meta" && qxml.isStartElement()) {
-            QXmlStreamAttributes qxmlAttributes = qxml.attributes();
+        if (mQXml.name() == "meta" && mQXml.isStartElement()) {
+            QXmlStreamAttributes qxmlAttributes = mQXml.attributes();
 
             if (qxmlAttributes.hasAttribute("name") && qxmlAttributes.hasAttribute("content")) {
                 if (qxmlAttributes.value("name") == "cover") {
@@ -170,21 +169,20 @@ QString epub::parseManifest(const QString &coverId)
         exactMatch = false;
     }
 
-    mContainer->seek(0); //ensure the file is parsed from beginning
-    QXmlStreamReader qxml(mContainer.data());
+    getXml(mOpfUrl);
 
     QString value = "";
 
-    while(!qxml.atEnd())
+    while(!mQXml.atEnd())
     {
-        qxml.readNext();
+        mQXml.readNext();
 
-        if (qxml.name() == "manifest" && qxml.isEndElement()) {
+        if (mQXml.name() == "manifest" && mQXml.isEndElement()) {
             break;
         }
 
-        if (qxml.name() == "item" && qxml.isStartElement()) {
-            QXmlStreamAttributes qxmlAttributes = qxml.attributes();
+        if (mQXml.name() == "item" && mQXml.isStartElement()) {
+            QXmlStreamAttributes qxmlAttributes = mQXml.attributes();
 
             if (qxmlAttributes.hasAttribute("id") && qxmlAttributes.hasAttribute("href")) {
                 if (exactMatch == true) {
@@ -223,12 +221,14 @@ QString epub::getFileUrl(const QString &href)
         tHref = href.mid(3);
     }
 
-    for (int i = 0; i < mItemsList.count(); ++i)
+    int i = 0;
+    while (i < mItemsList.count())
     {
         if (mItemsList.at(i).contains(tHref)) {
             value = mItemsList.at(i);
             break;
         }
+        ++i;
     }
 
     return value;
@@ -256,22 +256,46 @@ QString epub::getCoverUrl(const QString &href)
     return value;
 }
 
-void epub::getFile(const QString &fileName)
+bool epub::getFile(const QString &fileName)
 {
-    const KArchiveDirectory *dir = this->directory();
-    const KZipFileEntry *file = static_cast<const KZipFileEntry*>(dir->entry(fileName));
-    mContainer = QSharedPointer<QIODevice>(file->createDevice());
-    // delete dir and file...
+    if (mDeviceUrl != fileName) {
+        const KArchiveDirectory *dir = this->directory();
+        const KZipFileEntry *file = static_cast<const KZipFileEntry*>(dir->entry(fileName));
+        mContainer.reset(file->createDevice());
+        mDeviceUrl = fileName;
+
+        return true;
+    }
+
+    return false;
+}
+
+void epub::getXml(const QString &fileName)
+{
+    if (!getFile(fileName)) {
+        mContainer.data()->reset(); // to ensure the file is parsed from beginning
+    }
+
+    mQXml.setDevice(mContainer.data()); // it's a bit strange to re-set the device in case the QIODevice isn't changed, but seems needed with some (a bit malformed) opf files
+
+    /*
+    if (getFile(fileName)) {
+        mQXml.setDevice(mContainer.data());
+    } else {
+        mContainer.data()->reset(); // ensure the file is parsed from beginning
+    }
+    */
 }
 
 bool epub::getCoverImage(const QString &fileName, QImage &coverImage)
 {
-    getFile(fileName);
+    if (getFile(fileName)) {
+        QImage tCoverImage;
+        if (tCoverImage.loadFromData(mContainer.data()->readAll())) {
+            coverImage = tCoverImage;
 
-    QImage tCoverImage;
-    if (tCoverImage.loadFromData(mContainer.data()->readAll())) {
-        coverImage = tCoverImage;
-        return true;
+            return true;
+        }
     }
 
     return false;
@@ -280,21 +304,19 @@ bool epub::getCoverImage(const QString &fileName, QImage &coverImage)
 // parse an xhtm(in an ideal world with just validated epub files) to search for the first image reference
 QString epub::parseCoverPage(const QString &coverUrl)
 {
-    getFile(coverUrl);
-
-    QXmlStreamReader qxml(mContainer.data());
+    getXml(coverUrl);
 
     QString tCoverUrl = "";
 
-    while (!qxml.atEnd())
+    while (!mQXml.atEnd())
     {
-        qxml.readNextStartElement();
+        mQXml.readNextStartElement();
 
-        if (qxml.name() == "img") {
-            tCoverUrl = qxml.attributes().value("src").toString();
+        if (mQXml.name().toString().toLower() == "img") { //toLower as a workaround for some xhtm
+            tCoverUrl = mQXml.attributes().value("src").toString();
             break;
-        } else if (qxml.name() == "image") {
-            tCoverUrl = qxml.attributes().value("xlink:href").toString();
+        } else if (mQXml.name().toString().toLower() == "image") {
+            tCoverUrl = mQXml.attributes().value("xlink:href").toString();
             break;
         }
     }
@@ -306,11 +328,14 @@ bool endsWith (const QString &coverUrl, const QStringList &extensions)
 {
     bool returnValue = false;
 
-    for (int i = 0; i < extensions.count(); ++i)
+    int i = 0;
+    while (i < extensions.count())
     {
         if (coverUrl.endsWith("." + extensions.at(i), Qt::CaseInsensitive)) {
             returnValue = true;
+            break;
         }
+        ++i;
     }
 
     return returnValue;
