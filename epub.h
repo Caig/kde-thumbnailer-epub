@@ -30,8 +30,9 @@ public:
     bool open(QIODevice::OpenMode mode);
 
     QString parseMetadata();
+    QString parseGuide();
+    QString parseSpine();
     QString parseManifest(const QString &coverId);
-    //QString parseGuide();
 
     QString getCoverUrl(const QString &href);
     bool getCoverImage(const QString &fileName, QImage &coverImage);

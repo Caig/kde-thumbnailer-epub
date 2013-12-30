@@ -46,16 +46,30 @@ bool EPUBCreator::create(const QString &path, int width, int height, QImage &img
 
     if (!epubFile.open(QIODevice::ReadOnly)) {
         qDebug() << "[epub thumbnailer]" << "Couldn't open or parse" << path;
-    }
-    else {
+    } else {
         QString metadataRef = epubFile.parseMetadata();
-
         QString coverHref = epubFile.parseManifest(metadataRef);
 
+        if (coverHref.isEmpty()) {
+            coverHref = epubFile.parseGuide();
+
+            if (coverHref.isEmpty()) {
+                QString idRef = epubFile.parseSpine();
+                if (idRef.isEmpty()) {
+                    coverHref = "cover"; // last chance, will try to pick a file with "cover" in the url
+                } else {
+                    coverHref = epubFile.parseManifest(idRef);
+                    if (coverHref.isEmpty()) {
+                        coverHref = "cover"; // last chance
+                    }
+                }
+            }
+        }
+        
         qDebug() << "[epub thumbnailer]" << "Searching for cover url...";
         QString coverUrl = epubFile.getCoverUrl(coverHref);
 
-        if (coverUrl != "") {
+        if (!coverUrl.isEmpty()) {
             qDebug() << "[epub thumbnailer]" << "Cover url:" << coverUrl;
 
             QImage coverImage;

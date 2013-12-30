@@ -81,7 +81,7 @@ bool epub::getOpfUrl()
     QString value = "";
 
     QString containerXmlUrl = getFileUrl("META-INF/container.xml"); // it must exist according to format specification, but better to be sure...
-    if (containerXmlUrl != "") {
+    if (!containerXmlUrl.isEmpty()) {
         if (mDeviceUrl != containerXmlUrl) {
             getXml(containerXmlUrl);
         }
@@ -101,7 +101,7 @@ bool epub::getOpfUrl()
         }
     }
 
-    if (value == "") {
+    if (value.isEmpty()) {
         qDebug() << "[epub thumbnailer]" << "No or wrong container.xml, trying to find opf file manually...";
 
         int i = 0;
@@ -149,7 +149,7 @@ QString epub::parseMetadata()
         }
     }
 
-    if (value == "") {
+    if (value.isEmpty()) {
         qDebug() << "[epub thumbnailer]" << "No cover reference found.";
     } else {
         qDebug() << "[epub thumbnailer]" << "Metadata reference:" << value;
@@ -164,7 +164,7 @@ QString epub::parseManifest(const QString &coverId)
 
     bool exactMatch = true;
     QString tCoverId = coverId;
-    if (tCoverId == "") {
+    if (tCoverId.isEmpty()) {
         tCoverId = "cover";
         exactMatch = false;
     }
@@ -200,11 +200,86 @@ QString epub::parseManifest(const QString &coverId)
         }
     }
 
-    if (value == "") {
-        value = "cover"; //last chance, try to pick a file with "cover" in the filename
+    if (value.isEmpty()) {
+        //value = "cover"; //last chance, try to pick a file with "cover" in the filename
         qDebug() << "[epub thumbnailer]" << "No cover href found.";
     } else {
         qDebug() << "[epub thumbnailer]" << "Cover href:" << value;
+    }
+
+    return value;
+}
+
+// seems useful on very rare cases
+QString epub::parseGuide()
+{
+    qDebug() << "[epub thumbnailer]" << "Searching cover reference in guide...";
+
+    getXml(mOpfUrl);
+
+    QString value = "";
+
+    while(!mQXml.atEnd())
+    {
+        mQXml.readNext();
+
+        if (mQXml.name() == "guide" && mQXml.isEndElement()) {
+            break;
+        }
+
+        if (mQXml.name() == "reference" && mQXml.isStartElement()) {
+            QXmlStreamAttributes qxmlAttributes = mQXml.attributes();
+
+            if (qxmlAttributes.hasAttribute("type") && qxmlAttributes.hasAttribute("title") && qxmlAttributes.hasAttribute("href")) {
+                if (qxmlAttributes.value("type") == "cover" || qxmlAttributes.value("title") == "cover") {
+                    value = qxmlAttributes.value("href").toString();
+                    break;
+                }
+            }
+        }
+    }
+
+    if (value.isEmpty()) {
+        qDebug() << "[epub thumbnailer]" << "No cover reference found.";
+    } else {
+        qDebug() << "[epub thumbnailer]" << "Guide reference:" << value;
+    }
+
+    return value;
+}
+
+// pick the first xhtm file according to the spine section, it could contain the cover image
+// seems useful on very rare cases
+QString epub::parseSpine()
+{
+    qDebug() << "[epub thumbnailer]" << "Searching first file in spine...";
+
+    getXml(mOpfUrl);
+
+    QString value = "";
+
+    while(!mQXml.atEnd())
+    {
+        mQXml.readNext();
+
+        if (mQXml.name() == "spine" && mQXml.isEndElement()) {
+            break;
+        }
+
+        if (mQXml.name() == "itemref" && mQXml.isStartElement()) {
+            QXmlStreamAttributes qxmlAttributes = mQXml.attributes();
+
+            if (qxmlAttributes.hasAttribute("idref")) {
+                value = qxmlAttributes.value("idref").toString();
+                break;
+            }
+        }
+    }
+
+    if (value.isEmpty()) {
+        qDebug() << "[epub thumbnailer]" << "No first file found.";
+    } else {
+        qDebug() << "[epub thumbnailer]" << "First file:" << value;
     }
 
     return value;
@@ -224,7 +299,7 @@ QString epub::getFileUrl(const QString &href)
     int i = 0;
     while (i < mItemsList.count())
     {
-        if (mItemsList.at(i).contains(tHref)) {
+        if (mItemsList.at(i).contains(tHref, Qt::CaseInsensitive)) {
             value = mItemsList.at(i);
             break;
         }
@@ -238,12 +313,12 @@ QString epub::getCoverUrl(const QString &href)
 {
     QString value = getFileUrl(href);
 
-    if (value != "") {
+    if (!value.isEmpty()) {
         if (endsWith(value, QStringList() << "jpg" << "jpeg" << "png" << "gif" << "bmp")) {
             return value;
         } else if (endsWith(value, QStringList() << "xhtml" << "xhtm" << "html" << "htm" << "xml")) {
             QString tCoverUrl = parseCoverPage(value);
-            if (tCoverUrl != "") {
+            if (!tCoverUrl.isEmpty()) {
                 value = getFileUrl(tCoverUrl);
             } else {
                 qDebug() << "[epub thumbnailer]" << "No image found in the cover page.";
