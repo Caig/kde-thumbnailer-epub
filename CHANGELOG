@@ -1,3 +1,13 @@
+1.0
+-----
+Stable release (just 0.9 renamed)
+
+0.9 beta (nolibepub branch)
+-----
+Complete rewrite:
+    * It requires no more libepub.
+    * Increased supported ePub files.
+
 0.3.1
 -----
 * Added another strategy to find the cover, currently shaped on Sigil (by dliw)

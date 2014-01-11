@@ -1,6 +1,6 @@
 /*
 This file is part of kde-thumbnailer-epub
-Copyright (C) 2012 Caig <giacomosrv@gmail.com>
+Copyright (C) 2012-2013-2014 Caig <giacomosrv@gmail.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -21,10 +21,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <kio/thumbcreator.h>
-#include <QXmlStreamReader>
-#include <QImage>
-
-#include <epub.h>
 
 class EPUBCreator : public QObject, public ThumbCreator
 {
@@ -36,21 +32,6 @@ class EPUBCreator : public QObject, public ThumbCreator
         virtual bool create(const QString &path, int width, int height, QImage &img);
         virtual Flags flags() const;
 
-    private:
-        epub *mEpub;
-        eiterator *mEiterator;
-        titerator *mTiterator;
-        
-        QString mCoverPage;
-        QXmlStreamReader *mQXml;
-        QString mCoverImageName;
-
-        bool coverFromGuide(); //retrieve the cover searching for a right guide in the toc
-        bool coverFromFirstFile(); //retrieve the cover parsing the first xml/html file
-        bool coverFromMetadata(); //retrieve the cover parsing opf metadata section
-        void parseCoverPage(); //parse the mCoverPage to find the mCoverImageName
-        void fixCoverImageName(); //fix some name issues
-        void getCoverImage(QImage &image); //get image from mCoverImageName;
 };
 
 #endif // EPUBTHUMBNAIL_H
