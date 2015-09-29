@@ -1,6 +1,6 @@
 /*
 This file is part of kde-thumbnailer-epub
-Copyright (C) 2012-2013-2014 Caig <giacomosrv@gmail.com>
+Copyright (C) 2012-2015 Giacomo Barazzetti <giacomosrv@gmail.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 extern "C"
 {
-    KDE_EXPORT ThumbCreator *new_creator()
+    Q_DECL_EXPORT ThumbCreator *new_creator()
     {
         return new EPUBCreator();
     }
