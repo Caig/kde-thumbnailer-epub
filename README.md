@@ -6,7 +6,7 @@ Since 1.0.9 (beta) release it works with KDE Frameworks 5, for KDE 4 just keep u
 
 http://kde-apps.org/content/show.php/KDE+ePub+Thumbnailer?content=151210
 
-Installation from source
+Installation from source (KF5)
 ------------------------
 
     mkdir build
@@ -15,4 +15,15 @@ Installation from source
     make
     sudo make install
     kbuildsycoca5
+
+Installation from source (KDE 4)
+------------------------
+
+    mkdir build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX=`kde4-config --prefix` ..
+    make
+    sudo make install
+    kbuildsycoca4
+
     

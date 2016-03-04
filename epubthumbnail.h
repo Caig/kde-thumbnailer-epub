@@ -1,6 +1,6 @@
 /*
 This file is part of kde-thumbnailer-epub
-Copyright (C) 2012-2015 Giacomo Barazzetti <giacomosrv@gmail.com>
+Copyright (C) 2012-2016 Giacomo Barazzetti <giacomosrv@gmail.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,8 +27,6 @@ class EPUBCreator : public QObject, public ThumbCreator
     Q_OBJECT
 
     public:
-        explicit EPUBCreator();
-        virtual ~EPUBCreator();
         virtual bool create(const QString &path, int width, int height, QImage &img);
         virtual Flags flags() const;
 
