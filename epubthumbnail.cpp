@@ -1,6 +1,6 @@
 /*
 This file is part of kde-thumbnailer-epub
-Copyright (C) 2012-2016 Giacomo Barazzetti <giacomosrv@gmail.com>
+Copyright (C) 2012-2017 Giacomo Barazzetti <giacomosrv@gmail.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,7 +20,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "epub.h"
 
 #include <QtGui/QImage>
-#include <QtCore/QDebug>
 
 extern "C"
 {
@@ -30,47 +29,13 @@ extern "C"
     }
 }
 
-bool EPUBCreator::create(const QString &path, int width, int height, QImage &img)
+bool EPUBCreator::create(const QString &path, int /*width*/, int /*height*/, QImage &img)
 {    
-    epub epubFile(path);
+    Epub epubFile(path);
 
-    if (!epubFile.open(QIODevice::ReadOnly)) {
-        qDebug() << "[epub thumbnailer]" << "Couldn't open or parse" << path;
-    } else {
-        QString metadataRef = epubFile.parseMetadata();
-        QString coverHref = epubFile.parseManifest(metadataRef);
-
-        if (coverHref.isEmpty()) {
-            coverHref = epubFile.parseGuide();
-
-            if (coverHref.isEmpty()) {
-                QString idRef = epubFile.parseSpine();
-                if (idRef.isEmpty()) {
-                    coverHref = "cover"; // last chance, will try to pick a file with "cover" in the url
-                } else {
-                    coverHref = epubFile.parseManifest(idRef);
-                    if (coverHref.isEmpty()) {
-                        coverHref = "cover"; // last chance
-                    }
-                }
-            }
-        }
-        
-        qDebug() << "[epub thumbnailer]" << "Searching for cover url...";
-        QString coverUrl = epubFile.getCoverUrl(coverHref);
-
-        if (!coverUrl.isEmpty()) {
-            qDebug() << "[epub thumbnailer]" << "Cover url:" << coverUrl;
-
-            QImage coverImage;
-            if (epubFile.getCoverImage(coverUrl, coverImage)) {
-                img = coverImage.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                qDebug() << "[epub thumbnailer]" << "Done!";
-            }
-        }
+    if (epubFile.open()) {
+        epubFile.getCoverImage(img);
     }
-
-    epubFile.close();
     
     return !img.isNull();
 }

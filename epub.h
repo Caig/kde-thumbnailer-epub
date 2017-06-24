@@ -1,6 +1,6 @@
 /*
 This file is part of kde-thumbnailer-epub
-Copyright (C) 2012-2016 Giacomo Barazzetti <giacomosrv@gmail.com>
+Copyright (C) 2012-2017 Giacomo Barazzetti <giacomosrv@gmail.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,39 +19,43 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef EPUB_H
 #define EPUB_H
 
-#include <QtGui/QImage>
-#include <QtCore/QXmlStreamReader>
 #include <kzip.h>
+#include <QtXmlPatterns/QXmlQuery>
 
-class epub : public KZip
+class QImage;
+
+class Epub
 {
 public:
-    epub(const QString &path);
-    bool open(QIODevice::OpenMode mode);
-
-    QString parseMetadata();
-    QString parseGuide();
-    QString parseSpine();
-    QString parseManifest(const QString &coverId);
-
-    QString getCoverUrl(const QString &href);
-    bool getCoverImage(const QString &fileName, QImage &coverImage);
+    explicit Epub(const QString &path);
+    ~Epub();
+    bool open();
+    bool getCoverImage(QImage &coverImage);
 
 private:
-    QStringList mItemsList;
-    QScopedPointer<QIODevice> mContainer;
-    QXmlStreamReader mQXml;
-    QString mDeviceUrl;
-
+    KZip mZip;
+    
+    QStringList mFilesList;
     QString mOpfUrl;
+    QString mOpf;
+    QXmlQuery mOpfQuery;
 
-    void getItemsList(const KArchiveDirectory *dir, QString path);
-    bool getOpfUrl();
-    QString getFileUrl(const QString &href);
-    bool getFile(const QString &fileName);
-    void getXml(const QString &fileName);
-
-    QString parseCoverPage(const QString &coverUrl);
+    void loadFilesList(const KArchiveDirectory *dir, const QString &subPath = "");
+    bool loadOpf();
+    
+    // searching strategies
+    QString getRefFromMetadata();
+    QString getRefFromGuide();
+    QString getRefFromSpine(); // search in the first ~xhtm according to spine, it could contain the cover image
+    QString getRefByName() const; // search for cover by filename
+    
+    QString getRefById(const QString &coverId);
+    QString getAttrFromOpf(const QString &query, const QString &namesp = "");
+    QString getRefFromXhtm(const QString &xhtmUrl) const; // search for the first image in a xhtm
+    
+    bool isImage(const QString &ref) const;
+    QString getAbsoluteUrl(const QString &url) const;
+    QByteArray getFile(const QString &fileName) const;
 };
 
 #endif // EPUB_H
