@@ -46,7 +46,7 @@ private:
     // searching strategies
     QString getRefFromMetadata();
     QString getRefFromGuide();
-    QString getRefFromSpine(); // search in the first ~xhtm according to spine, it could contain the cover image
+    QString getRefFromSpine(); // search the first ~xhtm according to spine, it could contain the cover image
     QString getRefByName() const; // search for cover by filename
     
     QString getRefById(const QString &coverId);
